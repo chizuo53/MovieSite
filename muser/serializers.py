@@ -1,0 +1,36 @@
+from rest_framework import serializers
+from django.contrib.auth.models import User
+from django.contrib.auth.hashers import make_password
+
+class UserModelSerializer(serializers.ModelSerializer):
+
+    def create(self, validated_data):
+        if 'password' in validated_data:
+            validated_data['password'] = make_password(validated_data['password'])
+        return super().create(validated_data)
+
+
+    def update(self, instance, validated_data):
+        if 'password' in validated_data:
+            validated_data['password'] = make_password(validated_data['password'])
+        return super().update(instance, validated_data)
+
+
+class StaffSerializer(UserModelSerializer):
+    password = serializers.CharField(max_length=128, write_only=True, required=False)
+
+    class Meta:
+        model = User
+        fields = ['password']
+
+
+
+class SuperuserSerializer(UserModelSerializer):
+    pk = serializers.ReadOnlyField()
+    date_joined = serializers.ReadOnlyField()
+    last_login = serializers.ReadOnlyField()
+    password = serializers.CharField(max_length=128, write_only=True, required=False)
+
+    class Meta:
+        model = User
+        fields = ['pk', 'username', 'password', 'is_staff', 'is_superuser', 'is_active', 'date_joined', 'last_login']
