@@ -8,7 +8,7 @@ from djongo import models
 # Create your models here.
 
 class Spider(models.Model):
-    status_choice = [('audit','audit'), ('start','start'), ('ready','ready'), ('running','running'), ('pause','pause'), ('resume','resume'), ('terminate','terminate'), ('error','error'), ('finished','finished'), ('has_paused','has_paused'), ('has_terminated','has_terminated')]
+    status_choice = [('audit','audit'), ('start','start'), ('ready','ready'), ('running','running'), ('pause','pause'), ('resume','resume'), ('terminate','terminate'), ('error','error'), ('finished','finished'), ('has_paused','has_paused'), ('has_terminated','has_terminated'), ('restart','restart'), ('delete','delete'), ('has_deleted','has_deleted')]
 
     _id = models.ObjectIdField()
     spidername = models.CharField(max_length=50)
@@ -16,9 +16,9 @@ class Spider(models.Model):
     siteurl = models.URLField(max_length=300)
     owner = models.ForeignKey(User, related_name='spiders', on_delete=models.CASCADE)
     code = models.TextField()
-    store_path = models.CharField(max_length=200)
+#    store_path = models.CharField(max_length=200)
     status = models.CharField(max_length=50, choices=status_choice)
-    comment = models.CharField(max_length=500)
+    comment = models.TextField()
     date_created = models.DateTimeField(auto_now=True)
     date_updated = models.DateTimeField(auto_now_add=True)
 

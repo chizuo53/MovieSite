@@ -1,6 +1,8 @@
-from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
+
+from rest_framework import serializers
+from rest_framework.authtoken.models import Token
 
 class UserModelSerializer(serializers.ModelSerializer):
 
@@ -13,6 +15,9 @@ class UserModelSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         if 'password' in validated_data:
             validated_data['password'] = make_password(validated_data['password'])
+        user = User.objects.get(pk=instance.pk)
+        Token.objects.filter(user=user).delete()
+        Token.objects.create(user=user)
         return super().update(instance, validated_data)
 
 

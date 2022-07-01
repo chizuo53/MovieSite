@@ -17,7 +17,7 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
-from muser.views import UserViewSet
+from muser.views import UserViewSet, CustomAuthToken
 from spider.views import SpiderViewSet
 from movie.views import MovieListView, MovieSearchView, MoviePlayerView
 
@@ -28,8 +28,9 @@ router.register(r'spider', SpiderViewSet,basename="spider")
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api-auth/', include('rest_framework.urls')),
-    path('', include(router.urls)),
-    path('movie', MovieListView.as_view()),
-    path('movie/search', MovieSearchView.as_view()),
-    path('movie/player', MoviePlayerView.as_view()),
+    path('api-token-auth', CustomAuthToken.as_view()),
+    path('api/', include(router.urls)),
+    path('api/movie', MovieListView.as_view()),
+    path('api/movie/search', MovieSearchView.as_view()),
+    path('api/movie/player', MoviePlayerView.as_view()),
 ]

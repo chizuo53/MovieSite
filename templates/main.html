@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/vue@next"></script>
+    <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/5.1.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.css">
+    <title>MovieSite</title>
+</head>
+<body>
+    <div id="app"></div>
+</body>
+    <script src="https://cdn.staticfile.org/twitter-bootstrap/5.1.1/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/vue@next"></script>
+    <script src="https://cdn.staticfile.org/axios/0.18.0/axios.min.js"></script>
+    <script>
+        const MoviePage={
+            props:["moviePlayerKey","movielist","moviePagePrevious","moviePageNext"],
+            emits:["xgetMoviePage","xgetPlayerPage",],
+            methods:{
+                sgetPlayerPage(movie){
+                    this.$emit("xgetPlayerPage", movie)
+                },
+                sgetMoviePage(moviepageurl){
+                    this.$emit("xgetMoviePage",moviepageurl)
+                }
+            },
+            template:`
+		<div class="row">
+                    <div v-for="movie in movielist" class="col-2"><a href="javascript:;" @click.prevent="sgetPlayerPage(movie)"><img class="img-fluid" :src="movie.post" alt=""><span>{{movie.moviename}}</span></a></div>
+		</div>
+                <div class="row">
+                    <ul class="pagination justify-content-center mt-2">
+                        <li class="page-item" :class="moviePagePrevious==null?'disabled':''" @click.prevent="sgetMoviePage(moviePagePrevious)">
+                            <a class="page-link" href="javascript:;">上一页</a>
+                        </li>
+                        <li class="page-item" :class="moviePageNext==null?'disabled':''" @click.prevent="sgetMoviePage(moviePageNext)">
+                            <a class="page-link" href="javascript:;">下一页</a>
+                        </li>
+                    </ul>
+                </div>`,
+        }
+        const PlayerPage={
+            props:["playerlist","currentMovie"],
+            template:`
+                <h3 class="text-center text-secondary mb-5">{{currentMovie.moviename}}</h3>
+                <template v-for="player in playerlist">
+                    <div class="container">
+                        <div class="row">
+                            <div class="offset-md-1 col-md-4">
+                                <a :href="player.movieurl"><img :src="player.post" alt=""></a>
+                            </div>
+                            <div class="col-md-7">
+                                <a class="text-decoration-none" :href="player.siteurl">
+                                    <span class="h4">{{player.sitename}}</span>
+                                </a>
+                            </div>
+                        </div>
+                        <template v-for="(links, playername) in player.player">
+                            <p class="h4">{{playername}}</p>
+                            <div class="row">
+                                <div v-for="(link,linkname) in links" class="col-1" :class="link.valid==false?'bg-danger':'bg-info'">
+                                    <a class='text-decoration-none' :href="link.linkurl" >{{linkname}}</a>
+                                </div>
+                            </div>
+                        </template>
+                   </div>
+                </template>
+            `,
+        }
+        const SpiderPage={
+            props:["spiderlist"],
+            emits:["xgetCreateSpiderPage", "xgetChangeSpiderMsgPage", "xgetChangeSpiderCodePage", "xgetChangeSpiderStatusPage"],
+            methods:{
+                sgetCreateSpiderPage(){
+                    this.$emit("xgetCreateSpiderPage")
+                },
+                sgetChangeSpiderMsgPage(spider){
+                    this.$emit("xgetChangeSpiderMsgPage", spider)
+                },
+                sgetChangeSpiderCodePage(spider){
+                    this.$emit("xgetChangeSpiderCodePage", spider)
+                },
+                sgetChangeSpiderStatusPage(spider){
+                    this.$emit("xgetChangeSpiderStatusPage", spider)
+                },
+            },
+            template:`
+                <div class="container">
+                    <button type="button" class="btn btn-outline-info" @click="sgetCreateSpiderPage">新建爬虫</button>
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>爬虫名</th>
+                                <th>创建者</th>
+                                <th>网站名</th>
+                                <th>网站地址</th>
+                                <th>状态</th>
+                                <th>状态详情</th>
+                                <th>创建时间</th>
+                                <th>修改爬虫信息</th>
+                                <th>修改爬虫代码</th>
+                                <th>切换爬虫状态</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="spider in spiderlist">
+                                <td>{{spider.spidername}}</td>
+                                <td>{{spider.owner}}</td>
+                                <td>{{spider.sitename}}</td>
+                                <td>{{spider.siteurl}}</td>
+                                <td>{{spider.status}}</td>
+                                <td>{{spider.comment}}</td>
+                                <td>{{spider.date_created}}</td>
+                                <td><a href="javascript:;" @click.prevent="sgetChangeSpiderMsgPage(spider)"><i class="fa fa-pencil-square-o"></i></a></td>
+                                <td><a href="javascript:;" @click.prevent="sgetChangeSpiderCodePage(spider)"><i class="fa fa-pencil-square-o"></i></a></td>
+                                <td><a href="javascript:;" @click.prevent="sgetChangeSpiderStatusPage(spider)"><i class="fa fa-pencil-square-o"></i></a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `,
+        }
+        const SpiderCreatePage={
+            emits:["xcreateSpider"],
+            data(){
+                return {
+                    spidername:"",
+                    sitename:"",
+                    siteurl:"",
+                    code:"",
+                }
+            },
+            methods:{
+                screateSpider(){
+                    this.$emit("xcreateSpider",this.spidername,this.sitename,this.siteurl,this.code)
+                }
+            },
+            template:`
+                <div class="container">
+                    <form>
+                        <div class="mb-3 mt-3">
+                            <label for="spidername" class="form-label">爬虫名</label>
+                            <input type="text" class="form-control" id="spidername" placeholder="输入爬虫名" name="spidername" v-model="spidername">
+                        </div>
+                        <div class="mb-3">
+                            <label for="sitename" class="form-label">网站名</label>
+                            <input type="text" class="form-control" id="sitename" placeholder="输入网站名" name="sitename" v-model="sitename">
+                        </div>
+                        <div class="mb-3">
+                            <label for="siteurl" class="form-label">网站地址</label>
+                            <input type="text" class="form-control" id="siteurl" placeholder="输入网站地址" name="siteurl" v-model="siteurl">
+                        </div>
+                        <div class="mb-3">
+                            <label for="code">爬虫代码：</label>
+                            <textarea class="form-control" rows="5" id="code" placeholder="输入爬虫代码" name="code" v-model="code"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary" @click.prevent="screateSpider">创建爬虫</button>
+                    </form>
+                </div>
+            `
+            ,
+        }
+        const SpiderMsgPage={
+            props:["toChangeSpider"],
+            emits:["xpatchSpiderMsg"],
+            data(){
+                return {
+                    sitename:this.toChangeSpider.sitename,
+                    siteurl:this.toChangeSpider.siteurl,
+                }
+            },
+            methods:{
+                spatchSpiderMsg(){
+                    this.$emit("xpatchSpiderMsg", this.sitename, this.siteurl)
+                }
+            },
+            template:`
+                <div class="container">
+                    <form>
+                        <div class="mb-3 mt-3">
+                            <label for="spidername" class="form-label">爬虫名</label>
+                            <input type="text" class="form-control" id="spidername" :placeholder="toChangeSpider.spidername" name="spidername" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="sitename" class="form-label">网站名</label>
+                            <input type="text" class="form-control" id="sitename" name="sitename" v-model="sitename">
+                        </div>
+                        <div class="mb-3">
+                            <label for="siteurl" class="form-label">网站地址</label>
+                            <input type="text" class="form-control" id="siteurl" name="siteurl" v-model="siteurl">
+                        </div>
+                        <button type="submit" class="btn btn-primary" @click.prevent="spatchSpiderMsg">修改爬虫</button>
+                    </form>
+                </div>
+            `,
+        }
+        const SpiderCodePage={
+            props:["toChangeSpider"],
+            emits:["xpatchSpiderCode"],
+            data(){
+                return {
+                    code:this.toChangeSpider.code,
+                }
+            },
+            methods:{
+                spatchSpiderCode(){
+                    this.$emit("xpatchSpiderCode",this.code)
+                }
+            },
+            template:`
+                <div class="container">
+                    <form>
+                        <div class="mb-3 mt-3">
+                            <label for="spidername" class="form-label">爬虫名</label>
+                            <input type="text" class="form-control" id="spidername" :placeholder="toChangeSpider.spidername" name="spidername" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="code">爬虫代码：</label>
+                            <textarea class="form-control" rows="5" id="code" name="code" v-model="code"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary" @click.prevent="spatchSpiderCode">修改爬虫代码</button>
+                    </form>
+                </div>
+            `,
+        }
+        const SpiderStatusPage={
+            props:["toChangeSpider","spiderStatusChangeMapping"],
+            emits:["xpatchSpiderStatus"],
+            data(){
+                return {
+                    status:this.toChangeSpider.status,
+                }
+            },
+            methods:{
+                spatchSpiderStatus(){
+                    this.$emit("xpatchSpiderStatus", this.status)
+                }
+            },
+            template:`
+                <div class="container">
+                    <form>
+                        <div class="mb-3 mt-3">
+                            <label for="spidername" class="form-label">爬虫名</label>
+                            <input type="text" class="form-control" id="spidername" :placeholder="toChangeSpider.spidername" name="spidername" readonly>
+                        </div>
+                        <div class="mb-3" mt-3>
+                            <label for="status" class="form-label">爬虫状态</label>
+                            <template v-if="spiderStatusChangeMapping.hasOwnProperty(toChangeSpider.status)">
+                                <select class="form-select" id="status" name="status" v-model="status">
+                                    <option :value="toChangeSpider.status" selected>{{toChangeSpider.status}}</option>
+                                    <option v-for="statusChoice in spiderStatusChangeMapping[toChangeSpider.status]" :value="statusChoice">{{statusChoice}}</option>
+                                </select>
+                            </template>
+                            <template v-else>
+                                <select class="form-select" id="status" name="status" v-model="status">
+                                    <option :value="toChangeSpider.status" selected>{{toChangeSpider.status}}</option>
+                                </select>
+                            </template>
+                        </div>
+                        <button type="submit" class="btn btn-primary" @click.prevent="spatchSpiderStatus">修改爬虫状态</button>
+                    </form>
+                </div>
+            `,
+        }
+        const UserLoginPage={
+            emits:["xuserLogin"],
+            data(){
+                return{
+                    username:"",
+                    password:"",
+                }
+            },
+            methods:{
+                suserLogin(username, password){
+                    this.$emit("xuserLogin",this.username,this.password)
+                }
+            },
+            template:`
+                <div class="container">
+                    <form>
+                        <div class="mb-3 mt-3">
+                            <label for="username" class="form-label">用户名</label>
+                            <input type="text" class="form-control" id="username" placeholder="输入用户名" name="username" v-model="username">
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">密码</label>
+                            <input type="password" class="form-control" id="password" placeholder="输入密码" name="password" v-model="password">
+                        </div>
+                        <button type="submit" class="btn btn-primary" @click.prevent="suserLogin">登录</button>
+                    </form>
+                </div>
+            `,
+        }
+        const UserPage={
+            props:["userlist"],
+            emits:["xgetCreateUserPage","xgetChangeUserMsgPage","xgetChangeUserPasswordPage","xgetDeleteUserPage"],
+            methods:{
+                sgetCreateUserPage(){
+                    this.$emit("xgetCreateUserPage")
+                },
+                sgetChangeUserMsgPage(user){
+                    this.$emit("xgetChangeUserMsgPage", user)
+                },
+                sgetChangeUserPasswordPage(user){
+                    this.$emit("xgetChangeUserPasswordPage", user)
+                },
+                sgetDeleteUserPage(user){
+                    this.$emit("xgetDeleteUserPage", user)
+                }
+            },
+            template:`
+                <div class="container">
+                    <button type="button" class="btn btn-outline-info" @click="sgetCreateUserPage">新建用户</button>
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>用户名</th>
+                                <th>启用</th>
+                                <th>管理员</th>
+                                <th>超级用户</th>
+                                <th>创建时间</th>
+                                <th>上一次登录</th>
+                                <th>修改用户信息</th>
+                                <th>修改用户密码</th>
+                                <th>删除用户</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="user in userlist">
+                                <td>{{user.username}}</td>
+                                <td>{{user.is_active}}</td>
+                                <td>{{user.is_staff}}</td>
+                                <td>{{user.is_superuser}}</td>
+                                <td>{{user.date_joined}}</td>
+                                <td>{{user.last_login}}</td>
+                                <td><i class="fa fa-pencil-square-o" @click="sgetChangeUserMsgPage(user)"></i></td>
+                                <td><i class="fa fa-pencil-square-o" @click="sgetChangeUserPasswordPage(user)"></i></td>
+                                <td><i class="fa fa-trash" @click="sgetDeleteUserPage(user)"></i></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `,
+        }
+        const UserCreatePage={
+            emits:["xcreateUser"],
+            data(){
+                return{
+                    username:"",
+                    password:"",
+                    is_active:true,
+                    is_staff:false,
+                    is_superuser:false,
+                }
+            },
+            methods:{
+                screateUser(){
+                    this.$emit("xcreateUser",this.username,this.password,this.is_active,this.is_staff,this.is_superuser)
+                }
+            },
+            template:`
+                <div class="container">
+                    <form>
+                        <div class="mb-3 mt-3">
+                            <label for="username" class="form-label">用户名</label>
+                            <input type="text" class="form-control" id="username" placeholder="输入用户名" name="username" v-model="username">
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">密码</label>
+                            <input type="password" class="form-control" id="password" placeholder="输入初始密码" name="password" v-model="password">
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <label class="form-check-label" for="setactive">启用</label>
+                            <input class="form-check-input" type="checkbox" id="setactive" name="is_actice" v-model="is_active">
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <label class="form-check-label" for="setadmin">设为管理员</label>
+                            <input class="form-check-input" type="checkbox" id="setadmin" name="is_admin" v-model="is_staff">
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <label class="form-check-label" for="setsuperuser">设为超级管理员</label>
+                            <input class="form-check-input" type="checkbox" id="setsuperuser" name="is_superuser" v-model="is_superuser">
+                        </div>
+                        <button type="submit" class="btn btn-primary" @click.prevent="screateUser">新建用户</button>
+                    </form>
+                </div>
+            `,
+        }
+        const UserMsgPage={
+            props:["toChangeUser"],
+            emits:["xpatchUserMsg"],
+            data(){
+                return{
+                    is_active:this.toChangeUser.is_active,
+                    is_staff:this.toChangeUser.is_staff,
+                    is_superuser:this.toChangeUser.is_superuser,
+                }
+            },
+            methods:{
+                spatchUserMsg(){
+                    this.$emit("xpatchUserMsg",this.is_active,this.is_staff,this.is_superuser)
+                }
+            },
+            template:`
+                <div class="container">
+                    <form>
+                        <div class="mb-3 mt-3">
+                            <label for="username" class="form-label">用户名</label>
+                            <input type="text" class="form-control" id="username" :placeholder="toChangeUser.username" name="username" readonly>
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <label class="form-check-label" for="setactive">启用</label>
+                            <input class="form-check-input" type="checkbox" id="setactive" name="isactive" v-model="is_active">
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <label class="form-check-label" for="setadmin">设为管理员</label>
+                            <input class="form-check-input" type="checkbox" id="setadmin" name="isadmin" v-model="is_staff">
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <label class="form-check-label" for="setsuperuser">设为超级管理员</label>
+                            <input class="form-check-input" type="checkbox" id="setsuperuser" name="issuperuser" v-model="is_superuser">
+                        </div>
+                        <button type="submit" class="btn btn-primary" @click.prevent="spatchUserMsg">修改用户</button>
+                    </form>
+                </div>            
+            `,
+        }
+        const UserPasswordPage={
+            props:["toChangeUser"],
+            emits:["xpatchUserPassword"],
+            data(){
+                return{
+                    password1:"",
+                    password2:"",
+                }
+            },
+            methods:{
+                spatchUserPassword(){
+                    this.$emit("xpatchUserPassword",this.password1,this.password2)
+                }
+            },
+            template:`
+                <div class="container">
+                    <form>
+                        <div class="mb-3 mt-3">
+                            <label for="username" class="form-label">用户名</label>
+                            <input type="text" class="form-control" id="username" :placeholder="toChangeUser.username" name="username" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password1" class="form-label">密码</label>
+                            <input type="password" class="form-control" id="password1" placeholder="输入密码" name="password1" v-model="password1">
+                        </div>
+                        <div class="mb-3">
+                            <label for="password2" class="form-label">密码</label>
+                            <input type="password" class="form-control" id="password2" placeholder="输入密码" name="password2" v-model="password2">
+                        </div>
+                        <button type="submit" class="btn btn-primary" @click.prevent="spatchUserPassword">修改用户密码</button>
+                    </form>
+                </div>            
+            `,
+        }
+        const UserDeletePage={
+            props:["toChangeUser"],
+            emits:["xdeleteUser"],
+            methods:{
+                sdeleteUser(){
+                    this.$emit("xdeleteUser")
+                }
+            },
+            template:`
+                <div class="container">
+                    <form>
+                        <div class="mb-3 mt-3">
+                            <label for="username" class="form-label">用户名</label>
+                            <input type="text" class="form-control" id="username" :placeholder="toChangeUser.username" name="username" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="setactive">启用</label>
+                            <input class="form-control" type="text" id="setactive" name="is_active" :placeholder="toChangeUser.is_active" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="setadmin">设为管理员</label>
+                            <input class="form-control" type="text" id="setadmin" name="is_staff" :placeholder="toChangeUser.is_staff" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="setsuperuser">设为超级管理员</label>
+                            <input class="form-control" type="text" id="setsuperuser" name="is_superuser" :placeholder="toChangeUser.is_superuser" readonly>
+                        </div>
+                        <button type="submit" class="btn btn-primary" @click.prevent="sdeleteUser">确认删除用户</button>
+                    </form>
+                </div>
+            `,
+        }
+        const app = Vue.createApp({
+            data(){
+                return{
+                    backendDomain:"http://39.108.91.214:5353",
+                    instance:"",
+                    currentComponent:"",
+                    searchMovie:"",
+                    moviePagePrevious:"",
+                    moviePageNext:"",
+                    movieKey:"/api/movie",
+                    movieSearchKey:"/api/movie/search?m=",
+                    moviePlayerKey:"/api/movie/player?m=",
+                    spiderKey:"/api/spider/",
+                    tokenKey:"/api-token-auth",
+                    userKey:"/api/user/",
+                    userLevelKey:"/api/user/level/",
+                    movielist:[],
+                    playerlist:[],
+                    spiderlist:[],
+                    userlist:[],
+                    currentModule:"",
+                    currentMovie:{},
+                    toChangeSpider:{},
+                    toChangeUser:{},
+                    currentUser:{},
+                    spiderStatusChangeMapping:{
+                        "audit":["ready"],
+                        "ready":["start"],
+                        "running":["terminate","pause"],
+                        "has_paused":["resume","terminate"],
+                        "error":["restart","delete"],
+                        "has_terminated":["restart","delete"],
+                        "finished":["restart","delete"]
+                    },
+                }
+            },
+            mounted(){
+                this.instance = axios.create({
+                    baseURL:this.backendDomain,
+                });
+		this.instance.interceptors.request.use(
+		    function(config){
+			if (["post","put","patch","delete"].includes(config.method)){
+			    if (document.cookie.indexOf("csrftoken=") != -1){
+			        cookie_array = document.cookie.split("; ");
+				for(i=0;i<cookie_array.length;i++){
+			            if (cookie_array[i].startsWith("csrftoken")){
+                                        config.headers["x-csrftoken"] = cookie_array[i].split("=")[1];
+					break
+			            }
+			        }
+		            }
+			}
+		        return config
+		    },
+		);
+                this.instance.interceptors.response.use(
+                    function(response){
+                        if (response.status == 401){
+                            localStorage.removeItem("token");
+                            this.instance.defaults.headers.common["Authorization"] = "";
+                            this.currentUser = {};
+                            alert(response.data);
+                        }
+                        else {
+                            return response
+                        }
+                    }
+                );        
+                if (localStorage.getItem("token")) {
+                    this.instance.defaults.headers.common["Authorization"] = "Token "+localStorage.getItem("token");
+                    this.instance
+                        .get(this.userLevelKey)
+                        .then(response=>{
+                            this.currentUser.pk = response.data.pk;
+                            this.currentUser.username = response.data.username;
+                            this.currentUser.is_staff = response.data.is_staff;
+                            this.currentUser.is_superuser = response.data.is_superuser;
+                        })
+                };
+                this.getMoviePage(this.movieKey);
+            },
+            methods:{
+                getMoviePage(movie_page_url){
+                    this.instance
+                        .get(movie_page_url)
+                        .then(response=>{
+                            this.moviePagePrevious = response.data.previous;
+                            this.moviePageNext = response.data.next;
+                            this.movielist = response.data.results;
+                            this.searchMovie = "";
+                            this.currentModule = "movie";
+                            this.currentComponent = "MoviePage";
+                        });
+                },
+                getPlayerPage(movie){
+                    this.currentMovie = movie;
+                    player_url = this.moviePlayerKey+movie.moviename;
+                    this.instance
+                        .get(player_url)
+                        .then(response=>{
+                            this.playerlist = response.data;
+                            this.currentModule = "movie";
+                            this.currentComponent = "PlayerPage";
+                        });
+                },
+                getSpiderPage(){
+                    this.instance
+                        .get(this.spiderKey)
+                        .then(response=>{
+                            this.spiderlist = response.data;
+                            this.currentModule = "spider";
+                            this.currentComponent = "SpiderPage";
+                        })
+                },
+                getCreateSpiderPage(){
+                    this.currentModule = "spider";
+                    this.currentComponent = "SpiderCreatePage";
+                },
+                createSpider(spidername, sitename, siteurl, code){
+                    this.instance
+                        .post(this.spiderKey, {spidername:spidername,sitename:sitename,siteurl:siteurl,code:code})
+                        .then(response=>{
+                                if (response.status != 201) {
+                                    alert(response.data)
+                                };
+                                this.getSpiderPage();
+                            })
+                        .catch(error=>{
+                            console.log(error)
+                        });
+                },
+                getChangeSpiderMsgPage(spider){
+                    this.toChangeSpider = spider;
+                    this.currentModule = "spider";
+                    this.currentComponent = "SpiderMsgPage";
+                },
+                getChangeSpiderStatusPage(spider){
+                    this.toChangeSpider = spider;
+                    this.currentModule = "spider";
+                    this.currentComponent = "SpiderStatusPage";
+                },
+                getChangeSpiderCodePage(spider){
+                    this.toChangeSpider = spider;
+                    this.currentModule = "spider";
+                    this.currentComponent = "SpiderCodePage";
+                },
+                patchSpiderMsg(sitename, siteurl){
+                    if (this.toChangeSpider.sitename == sitename && this.toChangeSpider.siteurl == siteurl){
+                        this.toChangeSpider={};
+                        this.getSpiderPage();
+                    }
+                    else{
+                        this.instance
+                            .patch(this.spiderKey+this.toChangeSpider._id+"/",{sitename:sitename, siteurl:siteurl})
+                            .then(response=>{
+                                if (response.status != 200) {
+                                    alert(response.data)
+                                }
+                                this.toChangeSpider={};
+                                this.getSpiderPage();
+                            });
+                    };
+                },
+                patchSpiderCode(code){
+                    this.instance
+                        .patch(this.spiderKey+this.toChangeSpider._id+"/",{code:code})
+                        .then(response=>{
+                                if (response.status != 200) {
+                                    alert(response.data)
+                                };
+                                this.toChangeSpider={};
+                                this.getSpiderPage();
+                            });
+                },
+                patchSpiderStatus(status){
+                    this.instance
+                        .patch(this.spiderKey+this.toChangeSpider._id+"/",{status:status})
+                        .then(response=>{
+                                if (response.status != 200) {
+                                    alert(response.data)
+                                };
+                                this.toChangeSpider={};
+                                this.getSpiderPage();
+                            });
+                },
+                getUserPage(){
+                    this.instance
+                        .get(this.userKey)
+                        .then(response=>{
+                            this.userlist = response.data;
+                            this.currentModule = "user";
+                            this.currentComponent = "UserPage";
+                        })
+                },
+                getUserLoginPage(){
+                    this.currentComponent = "UserLoginPage";
+                },
+                userLogin(username,password){
+                    this.instance
+                        .post(this.tokenKey ,{username:username, password:password})
+                        .then(response=>{
+                            if (response.status == 200) {
+                                localStorage.setItem("token", response.data.token);
+                                this.currentUser.pk = response.data.pk;
+                                this.currentUser.username = response.data.username;
+                                this.currentUser.is_staff = response.data.is_staff;
+                                this.currentUser.is_superuser = response.data.is_superuser;
+                            } else {
+                                alert(response.data)
+                            };
+                            this.getMoviePage(this.movieKey);
+                        })
+                },
+                userLogout(){
+                    localStorage.clear();
+                    this.currentUser = {};
+                    this.getMoviePage(this.movieKey);
+                },
+                getCreateUserPage(){
+                    this.currentModule = "user";
+                    this.currentComponent = "UserCreatePage";
+                },
+                getChangeUserMsgPage(user){
+                    this.toChangeUser = user;
+                    this.currentComponent = "UserMsgPage";
+                },
+                getChangeUserPasswordPage(user){
+                    this.toChangeUser = user;
+                    this.currentComponent = "UserPasswordPage";
+                },
+                getDeleteUserPage(user){
+                    this.toChangeUser = user;
+                    this.currentComponent = "UserDeletePage";
+                },
+                createUser(username,password,is_active,is_staff,is_superuser){
+                    this.instance
+                        .post(this.userKey,{username:username,password:password,is_active:is_active,is_staff:is_staff,is_superuser:is_superuser})
+                        .then(response=>{
+                            if (response.status != 201) {
+                                alert(response.data)
+                            };
+                            this.getUserPage();
+                        });
+                },
+                patchUserPassword(pwd1, pwd2){
+                    if (pwd1 !== pwd2) {
+                        alert("两次密码不一致");
+                    }
+                    else {
+                        this.instance
+                            .patch(this.userKey+this.toChangeUser.pk+"/", {password:pwd1})
+                            .then(response=>{
+                                if (response.status == 200) {
+                                    alert("密码修改成功")
+                                } else {
+                                    alert(response.data)
+                                };
+                                this.toChangeUser = {};
+                                this.getMoviePage(this.movieKey);
+                            })
+                    };
+                },
+                patchUserMsg(is_active,is_staff,is_superuser){
+                    this.instance.patch(this.userKey+this.toChangeUser.pk+"/", {is_active:is_active,is_staff:is_staff,is_superuser:is_superuser})
+                            .then(response=>{
+                                if (response.status == 200) {
+                                    alert("用户信息修改成功")
+                                } else {
+                                    alert(response.data)
+                                };
+                                this.toChangeUser = {};
+                                this.getUserPage();
+                            });
+                },
+                deleteUser(){
+                    this.instance
+                        .delete(this.userKey+this.toChangeUser.pk+"/")
+                        .then(response=>{
+                            if (response.status != 204) {
+                                alert(response.data)
+                            };
+                            this.toChangeUser = {};
+                            this.getUserPage();
+                        })
+                },
+            },
+            components:{
+                "movie-page":MoviePage,
+                "player-page":PlayerPage,
+                "spider-page":SpiderPage,
+                "spider-create-page":SpiderCreatePage,
+                "spider-msg-page":SpiderMsgPage,
+                "spider-code-page":SpiderCodePage,
+                "spider-status-page":SpiderStatusPage,
+                "user-login-page":UserLoginPage,
+                "user-page":UserPage,
+                "user-create-page":UserCreatePage,
+                "user-msg-page":UserMsgPage,
+                "user-password-page":UserPasswordPage,
+                "user-delete-page":UserDeletePage
+            },
+            template:`
+                <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                    <div class="container-fluid">
+                        <a class="navbar-brand" href="#">Navbar</a>
+                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+                        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                                <li class="nav-item">
+                                    <a class="nav-link" :class="currentModule=='movie'?'active':' '" href="javascript:;" @click.prevent="getMoviePage(movieKey)">电影</a>
+                                </li>
+                                <li class="nav-item" v-if="currentUser.is_staff">
+                                    <a class="nav-link" :class="currentModule=='spider'?'active':' '" href="javascript:;" @click.prevent="getSpiderPage">爬虫管理</a>
+                                </li>
+                                <li class="nav-item" v-if="currentUser.is_superuser">
+                                    <a class="nav-link" :class="currentModule=='user'?'active':' '" href="javascript:;" @click.prevent="getUserPage">用户管理</a>
+                                </li>
+                            </ul>
+                            <form class="d-flex" role="search">
+                                <input class="form-control me-2" type="search" placeholder="Search" v-model="searchMovie">
+                                <button class="btn btn-outline-success" type="submit" @click.prevent="getMoviePage(movieSearchKey+searchMovie)">Search</button>
+                            </form>
+                            <template v-if="currentUser.username">
+                                <ul class="navbar-nav mb-2 mb-lg-0">
+                                    <li class="nav-item dropdown">
+                                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                                        {{currentUser.username}}
+                                        </a>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="javascript:;" @click="getChangeUserPasswordPage(currentUser)">修改密码</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item" href="javescript:;" @click.prevent="userLogout">退出登录</a></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </template>
+                            <template v-else>
+                                <ul class="navbar-nav mb-2 mb-lg-0">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="javascript:;" @click="getUserLoginPage">登录</a>
+                                    </li>
+                                </ul>
+                            </template>
+                        </div>
+                    </div>
+                </nav>
+                <movie-page v-if="currentComponent==='MoviePage'" @xgetMoviePage="getMoviePage" @xgetPlayerPage="getPlayerPage" :movielist="movielist" :moviePlayerKey="moviePlayerKey" :moviePagePrevious="moviePagePrevious" :moviePageNext="moviePageNext" />
+                <player-page v-if="currentComponent==='PlayerPage'" :currentMovie="currentMovie" :playerlist="playerlist" />
+                <spider-page v-if="currentComponent==='SpiderPage'" @xgetCreateSpiderPage="getCreateSpiderPage" @xgetChangeSpiderMsgPage="getChangeSpiderMsgPage" @xgetChangeSpiderCodePage="getChangeSpiderCodePage" @xgetChangeSpiderStatusPage="getChangeSpiderStatusPage" :spiderlist="spiderlist" />
+                <spider-create-page v-if="currentComponent==='SpiderCreatePage'" @xcreateSpider="createSpider" />
+                <spider-msg-page v-if="currentComponent==='SpiderMsgPage'" @xpatchSpiderMsg="patchSpiderMsg" :toChangeSpider="toChangeSpider" />
+                <spider-code-page v-if="currentComponent==='SpiderCodePage'" @xpatchSpiderCode="patchSpiderCode" :toChangeSpider="toChangeSpider" />
+                <spider-status-page v-if="currentComponent==='SpiderStatusPage'" @xpatchSpiderStatus="patchSpiderStatus" :toChangeSpider="toChangeSpider" :spiderStatusChangeMapping="spiderStatusChangeMapping" />
+                <user-login-page v-if="currentComponent==='UserLoginPage'" @xuserLogin="userLogin" />
+                <user-page v-if="currentComponent==='UserPage'" @xgetCreateUserPage="getCreateUserPage" @xgetChangeUserMsgPage="getChangeUserMsgPage" @xgetChangeUserPasswordPage="getChangeUserPasswordPage" @xgetDeleteUserPage="getDeleteUserPage" :userlist="userlist" />
+                <user-create-page v-if="currentComponent==='UserCreatePage'" @xcreateUser="createUser" />
+                <user-msg-page v-if="currentComponent==='UserMsgPage'" @xpatchUserMsg="patchUserMsg" :toChangeUser="toChangeUser" />
+                <user-password-page v-if="currentComponent==='UserPasswordPage'" @xpatchUserPassword="patchUserPassword" :toChangeUser="toChangeUser" />
+                <user-delete-page v-if="currentComponent==='UserDeletePage'" @xdeleteUser="deleteUser" :toChangeUser="toChangeUser" />
+            `,
+        })
+        const vm = app.mount("#app")
+    </script>
+</html>

@@ -8,16 +8,18 @@ class SpiderSerializer(serializers.ModelSerializer):
     status_change_allow = {'audit':('ready', 'start'),
                            'ready':('start',),
                            'running':('terminate', 'pause'),
-                           'has_paused':('resume',),
-                           'error':('restart',),
-                           'has_terminated':('restart',),
-                           'finished':('restart',)
+                           'has_paused':('resume', 'terminate'),
+                           'error':('restart','delete'),
+                           'has_terminated':('restart','delete'),
+                           'finished':('restart','delete')
         }
 
     _id = ObjectIdField()
     owner = serializers.ReadOnlyField(source='owner.username')
+    status = serializers.CharField(allow_blank=False, default='audit')
     date_created = serializers.ReadOnlyField()
     date_updated = serializers.ReadOnlyField()
+    comment = serializers.CharField(allow_blank=True, default='', required=False)
 
     def validate_status(self, value):
         if not self.instance:
