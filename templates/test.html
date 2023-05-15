@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Vue 测试实例 - 菜鸟教程(runoob.com)</title>
+<script src="https://unpkg.com/vue@next"></script>
+</head>
+<body>
+<div id="app">
+  <!-- `greet` 是在下面定义的方法名 -->
+  <button class="test bg-info" movielike=true @click="greet">点我</button>
+</div>
+
+<script>
+const app = {
+  data() {
+    return {
+      name: 'Runoob'
+    }
+  },
+  methods: {
+    greet(event) {
+      // `methods` 内部的 `this` 指向当前活动实例
+      //console.log(event)
+      if (event.target.attributes.movielike){
+        event.target.attributes.movielike.value = !Boolean(event.target.attributes.movielike.value)
+	bclassary = event.target.attributes.class.value.split(" ")
+        console.log(bclassary)
+	if (bclassary.indexOf("bg-info")>-1){
+            bg_index = bclassary.indexOf("bg-info")
+	    bclassary.splice(bg_index, 1)
+	    bclassary.push("bg-error")
+	    bclass = bclassary.join()
+            console.log("in if")
+            console.log(bclassary)
+            console.log(bclass)
+	}
+	else{
+            bg_index = bclassary.indexOf("bg-error")
+            console.log(bclassary)
+            bclassary.splice(bg_index, 1)
+            console.log(bclassary)
+            bclassary.push("bg-info")
+            bclass = bclassary.join()
+            console.log("in else")
+            console.log(bclassary)
+            console.log(bclass)
+	}
+        event.target.attributes.class.value = bclass
+      }
+    }
+  }
+}
+
+Vue.createApp(app).mount('#app')
+</script>
+</body>
+</html>
